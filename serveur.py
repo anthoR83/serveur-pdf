@@ -1,5 +1,3 @@
-# serveur.py
-
 from flask import Flask, request, jsonify, send_file
 import sqlite3, os
 from datetime import datetime
@@ -122,6 +120,11 @@ def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+# ---------------- ROUTE D’ACCUEIL ----------------
+@app.route("/")
+def index():
+    return "✅ Serveur Flask en ligne et opérationnel ! Utilise /clients, /employes, /remplissages, /pdfs ..."
 
 # ---------------- CLIENTS ----------------
 @app.route("/clients", methods=["GET"])
@@ -248,7 +251,6 @@ def fill_pdf():
     if pdf_modele not in FIELD_MAPS:
         return f"Pas de mapping pour {pdf_modele}", 400
 
-    # Préparer texte
     values = {
         "NOM": client,
         "FORMATEUR": employe or "",
@@ -259,7 +261,6 @@ def fill_pdf():
     if not os.path.exists(original_path):
         return "PDF modèle introuvable", 404
 
-    # Charger PDF original
     reader = PdfReader(original_path)
     writer = PdfWriter()
 
@@ -281,7 +282,6 @@ def fill_pdf():
         page.merge_page(overlay.pages[0])
         writer.add_page(page)
 
-    # Sauvegarder
     client_dir = os.path.join(REMPLIS_DIR, client)
     os.makedirs(client_dir, exist_ok=True)
     out_path = os.path.join(client_dir, f"{pdf_modele.replace('.pdf','')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf")
@@ -295,3 +295,6 @@ def fill_pdf():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+
+
