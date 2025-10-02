@@ -13,8 +13,8 @@
     .row{display:flex;gap:10px}
     .row>.col{flex:1}
     label{display:block;margin-bottom:6px;color:var(--muted);font-size:14px}
-    input,select,button{width:100%;padding:14px 12px;border-radius:10px;border:1px solid #374151;background:#0b1223;color:var(--txt);font-size:16px}
-    input:focus,select:focus,button:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+    select,button{width:100%;padding:14px 12px;border-radius:10px;border:1px solid #374151;background:#0b1223;color:var(--txt);font-size:16px}
+    select:focus,button:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
     .actions{display:flex;gap:10px;margin-top:12px}
     .btn{cursor:pointer;font-weight:600;border:1px solid #1f2937}
     .btn.primary{background:var(--accent);color:#052e12}
@@ -36,20 +36,17 @@
       <div class="row">
         <div class="col">
           <label for="client">Client</label>
-          <input list="clients" id="client" placeholder="Choisir un client…" autocomplete="off">
-          <datalist id="clients"></datalist>
+          <select id="client"></select>
         </div>
         <div class="col">
           <label for="employe">Employé</label>
-          <input list="employes" id="employe" placeholder="Choisir un employé…" autocomplete="off">
-          <datalist id="employes"></datalist>
+          <select id="employe"></select>
         </div>
       </div>
 
       <div style="margin-top:10px">
         <label for="pdf">Modèle PDF</label>
-        <input list="pdfs" id="pdf" placeholder="Choisir un PDF…" autocomplete="off">
-        <datalist id="pdfs"></datalist>
+        <select id="pdf"></select>
       </div>
 
       <div style="margin-top:12px">
@@ -78,7 +75,7 @@
   </main>
 
   <script>
-    const BASE_URL = "https://serveur-pdf.onrender.com"; // ⬅️ remplace par ton URL Render
+    const BASE_URL = "https://ton-serveur.onrender.com"; // ⚠️ remplace par ton URL Render
     const el = (id) => document.getElementById(id);
     let currentStatut = "";
 
@@ -101,14 +98,20 @@
           fetch(`${BASE_URL}/pdfs`).then(r=>r.json()),
         ]);
 
-        const clients = el('clients'); clients.innerHTML = "";
-        c.forEach(n => { const o=document.createElement('option'); o.value=n; clients.appendChild(o); });
+        // clients
+        const clientSel = el('client');
+        clientSel.innerHTML = "<option value='' disabled selected>Choisir…</option>";
+        c.forEach(n => { const o=document.createElement('option'); o.value=n; o.textContent=n; clientSel.appendChild(o); });
 
-        const employes = el('employes'); employes.innerHTML = "";
-        e.forEach(n => { const o=document.createElement('option'); o.value=n; employes.appendChild(o); });
+        // employés
+        const empSel = el('employe');
+        empSel.innerHTML = "<option value='' disabled selected>Choisir…</option>";
+        e.forEach(n => { const o=document.createElement('option'); o.value=n; o.textContent=n; empSel.appendChild(o); });
 
-        const pdfs = el('pdfs'); pdfs.innerHTML = "";
-        p.forEach(n => { const o=document.createElement('option'); o.value=n; pdfs.appendChild(o); });
+        // pdfs
+        const pdfSel = el('pdf');
+        pdfSel.innerHTML = "<option value='' disabled selected>Choisir…</option>";
+        p.forEach(n => { const o=document.createElement('option'); o.value=n; o.textContent=n; pdfSel.appendChild(o); });
 
         el('status').textContent = "Listes chargées.";
       } catch (err) {
@@ -138,16 +141,16 @@
       el('status').textContent = "Génération en cours…";
 
       try {
-        // 1) Générer le PDF rempli côté serveur (FIELD_MAPS: NOM, FORMATEUR, Date)
+        // 1) Générer le PDF rempli
         const r1 = await fetch(`${BASE_URL}/fill-pdf`, {
           method: "POST",
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify({ client, employe, pdf_modele: pdf })
         });
         if (!r1.ok) throw new Error(await r1.text());
-        const info = await r1.json(); // { message, path }
+        const info = await r1.json();
 
-        // 2) Enregistrer le statut dans la table remplissages
+        // 2) Enregistrer le statut
         const r2 = await fetch(`${BASE_URL}/remplissages`, {
           method: "POST",
           headers: {"Content-Type":"application/json"},
