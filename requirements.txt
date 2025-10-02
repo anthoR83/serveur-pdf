@@ -1,4 +1,4 @@
 flask
+pillow
 reportlab
 PyPDF2
-pillow
