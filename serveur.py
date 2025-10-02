@@ -15,6 +15,13 @@ REMPLIS_DIR = "remplis"
 os.makedirs(PDF_DIR, exist_ok=True)
 os.makedirs(REMPLIS_DIR, exist_ok=True)
 
+from flask import send_from_directory
+
+@app.route("/mobile")
+def mobile_home():
+    return send_from_directory(".", "index.html")  # si index.html est à la racine du projet
+
+
 # ---------------- FIELD MAPS ----------------
 FIELD_MAPS = {
     "FCP_Re-Use-Plonge.pdf": {
@@ -295,6 +302,7 @@ def fill_pdf():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
