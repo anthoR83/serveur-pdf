@@ -1,6 +1,6 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 import sqlite3, os
-from datetime import datetime
+from datetime import datetime, date
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from PyPDF2 import PdfReader, PdfWriter
@@ -14,8 +14,6 @@ REMPLIS_DIR = "remplis"
 
 os.makedirs(PDF_DIR, exist_ok=True)
 os.makedirs(REMPLIS_DIR, exist_ok=True)
-
-from flask import send_from_directory
 
 @app.route("/mobile")
 def mobile_home():
@@ -242,12 +240,6 @@ def get_pdf(filename):
         return "Fichier introuvable", 404
     return send_file(path, as_attachment=False)
 
-from flask import Flask, request, jsonify, send_file
-import os, datetime
-
-app = Flask(__name__)
-
-
 @app.route("/fill-pdf", methods=["POST"])
 def fill_pdf():
     data = request.get_json()
@@ -274,7 +266,7 @@ def fill_pdf():
     os.makedirs(client_dir, exist_ok=True)
 
     # 5) Nom du fichier rempli
-    date_str = datetime.date.today().isoformat()
+    date_str = date.today().isoformat()
     output_filename = f"{os.path.splitext(pdf_modele)[0]}_{date_str}.pdf"
     output_path = os.path.join(client_dir, output_filename)
 
