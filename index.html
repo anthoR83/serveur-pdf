@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Remplissage PDF - Mobile</title>
+  <style>
+    :root { --bg:#0f172a; --panel:#111827; --txt:#e5e7eb; --muted:#9ca3af; --accent:#22c55e; --danger:#ef4444; --warn:#f59e0b; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt)}
+    header{padding:16px 20px;font-weight:700;font-size:20px;background:linear-gradient(180deg,#111827,#0b1223 70%);position:sticky;top:0;z-index:10;border-bottom:1px solid #1f2937}
+    main{padding:16px;max-width:720px;margin:0 auto}
+    .card{background:var(--panel);border:1px solid #1f2937;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .row{display:flex;gap:10px}
+    .row>.col{flex:1}
+    label{display:block;margin-bottom:6px;color:var(--muted);font-size:14px}
+    input,select,button{width:100%;padding:14px 12px;border-radius:10px;border:1px solid #374151;background:#0b1223;color:var(--txt);font-size:16px}
+    input:focus,select:focus,button:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn{cursor:pointer;font-weight:600;border:1px solid #1f2937}
+    .btn.primary{background:var(--accent);color:#052e12}
+    .btn.secondary{background:#111827}
+    .btn.warn{background:var(--warn);color:#3b2300}
+    .status{margin-top:12px;font-size:14px;color:var(--muted)}
+    .badge{display:inline-block;padding:6px 10px;border-radius:100px;font-size:12px;font-weight:700}
+    .i{background:#fef08a;color:#4b4200}
+    .s{background:#fdba74;color:#351b00}
+    .v{background:#bbf7d0;color:#053315}
+    .legend{display:flex;gap:8px;margin-top:8px}
+    .footer{margin-top:18px;font-size:12px;color:var(--muted);text-align:center}
+  </style>
+</head>
+<body>
+  <header>Remplissage PDF – Mobile</header>
+  <main>
+    <div class="card">
+      <div class="row">
+        <div class="col">
+          <label for="client">Client</label>
+          <input list="clients" id="client" placeholder="Choisir un client…" autocomplete="off">
+          <datalist id="clients"></datalist>
+        </div>
+        <div class="col">
+          <label for="employe">Employé</label>
+          <input list="employes" id="employe" placeholder="Choisir un employé…" autocomplete="off">
+          <datalist id="employes"></datalist>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label for="pdf">Modèle PDF</label>
+        <input list="pdfs" id="pdf" placeholder="Choisir un PDF…" autocomplete="off">
+        <datalist id="pdfs"></datalist>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Statut</label>
+        <div class="row">
+          <button class="btn secondary" type="button" data-statut="i">Initiale <span class="badge i">i</span></button>
+          <button class="btn secondary" type="button" data-statut="s">Suivie <span class="badge s">s</span></button>
+          <button class="btn secondary" type="button" data-statut="v">Validation <span class="badge v">v</span></button>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="badge i">i</span>
+        <span class="badge s">s</span>
+        <span class="badge v">v</span>
+      </div>
+
+      <div class="actions">
+        <button class="btn secondary" id="previewBtn" type="button">Prévisualiser le PDF vierge</button>
+        <button class="btn primary" id="submitBtn" type="button">Générer & Enregistrer</button>
+      </div>
+      <div class="status" id="status">Prêt.</div>
+    </div>
+
+    <div class="footer">Cette web app appelle l’API serveur pour préremplir et enregistrer vos PDF.</div>
+  </main>
+
+  <script>
+    const BASE_URL = "https://serveur-pdf.onrender.com"; // ⬅️ remplace par ton URL Render
+    const el = (id) => document.getElementById(id);
+    let currentStatut = "";
+
+    // Sélection du statut (i/s/v)
+    document.querySelectorAll('[data-statut]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentStatut = btn.getAttribute('data-statut');
+        document.querySelectorAll('[data-statut]').forEach(b => b.classList.remove('warn'));
+        btn.classList.add('warn');
+        el('status').textContent = `Statut sélectionné : ${currentStatut}`;
+      });
+    });
+
+    // Charger listes
+    async function loadLists() {
+      try {
+        const [c, e, p] = await Promise.all([
+          fetch(`${BASE_URL}/clients`).then(r=>r.json()),
+          fetch(`${BASE_URL}/employes`).then(r=>r.json()),
+          fetch(`${BASE_URL}/pdfs`).then(r=>r.json()),
+        ]);
+
+        const clients = el('clients'); clients.innerHTML = "";
+        c.forEach(n => { const o=document.createElement('option'); o.value=n; clients.appendChild(o); });
+
+        const employes = el('employes'); employes.innerHTML = "";
+        e.forEach(n => { const o=document.createElement('option'); o.value=n; employes.appendChild(o); });
+
+        const pdfs = el('pdfs'); pdfs.innerHTML = "";
+        p.forEach(n => { const o=document.createElement('option'); o.value=n; pdfs.appendChild(o); });
+
+        el('status').textContent = "Listes chargées.";
+      } catch (err) {
+        el('status').textContent = "Erreur lors du chargement des listes.";
+        console.error(err);
+        alert("Impossible de charger les listes depuis le serveur.");
+      }
+    }
+
+    // Prévisualiser PDF vierge
+    el('previewBtn').addEventListener('click', () => {
+      const pdf = el('pdf').value.trim();
+      if (!pdf) return alert("Choisis d’abord un modèle PDF.");
+      window.open(`${BASE_URL}/pdfs/${encodeURIComponent(pdf)}`, "_blank");
+    });
+
+    // Générer & Enregistrer
+    el('submitBtn').addEventListener('click', async () => {
+      const client = el('client').value.trim();
+      const employe = el('employe').value.trim();
+      const pdf = el('pdf').value.trim();
+
+      if (!client) return alert("Client obligatoire.");
+      if (!pdf) return alert("Modèle PDF obligatoire.");
+      if (!currentStatut) return alert("Choisis un statut : i / s / v.");
+
+      el('status').textContent = "Génération en cours…";
+
+      try {
+        // 1) Générer le PDF rempli côté serveur (FIELD_MAPS: NOM, FORMATEUR, Date)
+        const r1 = await fetch(`${BASE_URL}/fill-pdf`, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ client, employe, pdf_modele: pdf })
+        });
+        if (!r1.ok) throw new Error(await r1.text());
+        const info = await r1.json(); // { message, path }
+
+        // 2) Enregistrer le statut dans la table remplissages
+        const r2 = await fetch(`${BASE_URL}/remplissages`, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({
+            client_nom: client,
+            pdf_modele: pdf,
+            statut: currentStatut,
+            employe_nom: employe || null
+          })
+        });
+        if (!r2.ok) throw new Error(await r2.text());
+
+        el('status').textContent = "✅ PDF généré et enregistré.";
+        alert("PDF généré et enregistré pour " + client + " !");
+      } catch (err) {
+        console.error(err);
+        el('status').textContent = "❌ Erreur lors de la génération.";
+        alert("Erreur : " + err.message);
+      }
+    });
+
+    loadLists();
+  </script>
+</body>
+</html>
